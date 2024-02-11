@@ -1,6 +1,3 @@
-const CALENDAR_ID = ''
-const API_KEY = ''
-
 const eventsUrl = new URL(`https://content.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`)
 
 function fetchEvents(): void {
