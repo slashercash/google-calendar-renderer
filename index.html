@@ -8,11 +8,12 @@
   </head>
   <body>
     <div>
-      <button onclick="pre()">prev</button>
-      <span id="month">month</span>
-      <button onclick="next()">next</button>
+      <button onclick="switchMonth(-1)">prev</button>
+      <span id="month"></span>
+      <button onclick="switchMonth(1)">next</button>
     </div>
-
+    <div><label>timeMin: </label><span id="time-min"></span></div>
+    <div><label>timeMax: </label><span id="time-max"></span></div>
     <button onclick="fetchEvents()">Fetch</button>
     <script type="text/javascript" src="./keys.js"></script>
     <script type="text/javascript" src="./script.js"></script>
