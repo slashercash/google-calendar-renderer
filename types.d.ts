@@ -6,5 +6,16 @@ interface EventsResponse {
 }
 
 interface Item {
-  summary: string
+  start: Timestamp
+  end: Timestamp
+}
+
+interface Timestamp {
+  date: string | undefined
+}
+
+interface CalendarDay {
+  date: Date
+  bookedMorning: boolean
+  bookedEvening: boolean
 }
