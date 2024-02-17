@@ -1,8 +1,7 @@
 const eventsUrl = new URL(`https://content.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`)
 
 const spanMonth = document.getElementById('month') as HTMLSpanElement
-const spanTimeMin = document.getElementById('time-min') as HTMLSpanElement
-const spanTimeMax = document.getElementById('time-max') as HTMLSpanElement
+const divCalendarBody = document.getElementById('calendar-body') as HTMLDivElement
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
 const ONE_DAY = 86400000
 const calendarDays: Array<CalendarDay> = []
@@ -34,8 +33,8 @@ function switchMonth(i: number) {
   }
 
   spanMonth.innerText = selectedMonth.getFullYear() + ' ' + months[selectedMonth.getMonth()]
-  spanTimeMin.innerText = timeMin.toISOString()
-  spanTimeMax.innerText = timeMax.toISOString()
+
+  fetchEvents()
 }
 
 function fetchEvents(): void {
@@ -48,6 +47,7 @@ function fetchEvents(): void {
   fetch(eventsUrl)
     .then((res): Promise<EventsResponse> => res.json())
     .then((res) => res.items.forEach(setCalendarDays))
+    .then(buildCalendar)
 }
 
 function setCalendarDays(item: Item) {
@@ -69,4 +69,15 @@ function setCalendarDays(item: Item) {
       day.bookedEvening = true
     }
   }
+}
+
+function buildCalendar() {
+  const divs = calendarDays.map(({ date, bookedMorning, bookedEvening }) => {
+    const div = document.createElement('div')
+    bookedMorning && div.classList.add('booked-morning')
+    bookedEvening && div.classList.add('booked-evening')
+    div.innerText = date.getDate().toString()
+    return div
+  })
+  divCalendarBody.replaceChildren(...divs)
 }
