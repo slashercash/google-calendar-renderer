@@ -2,6 +2,10 @@ body {
   background-color: rgb(32, 32, 32);
 }
 
+:root {
+  --gridSize: 30px;
+}
+
 span,
 label,
 div {
@@ -10,25 +14,71 @@ div {
 
 #calendar {
   background-color: rgb(72, 72, 72);
-  width: 180px;
+  width: fit-content;
+  padding: 1rem;
+  border-radius: 8px;
 }
 
 #calendar-head {
   display: flex;
   justify-content: space-between;
+  height: var(--gridSize);
+  align-items: center;
 }
 
-.weekdays,
+.underline {
+  background-color: red;
+  height: 1px;
+  margin-top: 4px;
+}
+
 #calendar-body {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, var(--gridSize));
+  grid-template-rows: repeat(5, var(--gridSize));
 }
 
-.weekdays,
-#calendar-body div {
+.weekdays {
+  display: flex;
+  align-items: center;
+  height: var(--gridSize);
+}
+
+.weekdays div {
+  flex: 1;
   text-align: center;
+}
+
+#calendar-body div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #calendar-body .booked-morning {
   color: red;
+}
+
+#calendar-body .faded {
+  color: gray;
+}
+
+#calendar-body .today {
+  border-radius: 50%;
+  border: solid 2px red;
+}
+
+#calendar button {
+  background-color: transparent;
+  height: var(--gridSize);
+  width: var(--gridSize);
+  padding: 0;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+#calendar svg {
+  width: 100%;
+  height: 100%;
 }

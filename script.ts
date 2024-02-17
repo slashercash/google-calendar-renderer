@@ -72,10 +72,14 @@ function setCalendarDays(item: Item) {
 }
 
 function buildCalendar() {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
   const divs = calendarDays.map(({ date, bookedMorning, bookedEvening }) => {
     const div = document.createElement('div')
     bookedMorning && div.classList.add('booked-morning')
     bookedEvening && div.classList.add('booked-evening')
+    date.getMonth() != selectedMonth.getMonth() && div.classList.add('faded')
+    date.getTime() === today.getTime() && div.classList.add('today')
     div.innerText = date.getDate().toString()
     return div
   })
