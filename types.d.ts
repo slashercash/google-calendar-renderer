@@ -14,6 +14,11 @@ interface Timestamp {
   date: string | undefined
 }
 
+interface CalendarEvent {
+  startTime: number
+  endTime: number
+}
+
 interface CalendarDay {
   date: Date
   bookedMorning: boolean

@@ -1,87 +1,68 @@
-const eventsUrl = new URL(`https://content.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`)
+const EVENTS_URL = `https://content.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+const ONE_DAY_MS = 86400000
 
-const spanMonth = document.getElementById('month') as HTMLSpanElement
-const divCalendarBody = document.getElementById('calendar-body') as HTMLDivElement
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
-const ONE_DAY = 86400000
-const calendarDays: Array<CalendarDay> = []
+const span_month = document.getElementById('month') as HTMLSpanElement
+const div_calendarBody = document.getElementById('calendar-body') as HTMLDivElement
 
-const now = new Date(Date.now())
-const selectedMonth = new Date(now.getFullYear(), now.getMonth())
-let timeMin: Date
-let timeMax: Date
+const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+const firstDayOfSelectedMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+
 switchMonth(0)
 
-function switchMonth(i: number) {
-  selectedMonth.setMonth(selectedMonth.getMonth() + i)
+function switchMonth(i: number): void {
+  firstDayOfSelectedMonth.setMonth(firstDayOfSelectedMonth.getMonth() + i)
+  span_month.innerText = firstDayOfSelectedMonth.getFullYear() + ' ' + MONTHS[firstDayOfSelectedMonth.getMonth()]
 
-  timeMin = new Date(selectedMonth.getTime())
-  let day = timeMin.getDay()
-  // TODO: would for-loop be better?
-  while (day !== 1) {
-    timeMin.setDate(timeMin.getDate() - 1)
-    day = timeMin.getDay()
-  }
-  timeMax = new Date(timeMin.getTime() + ONE_DAY * 35)
+  const firstDay = getLatestMonday(firstDayOfSelectedMonth)
+  const timeMin = firstDay.toISOString()
+  const timeMax = new Date(firstDay.getTime() + ONE_DAY_MS * 35).toISOString()
 
-  for (let i = 0; i < 35; i++) {
-    calendarDays[i] = {
-      date: new Date(timeMin.getTime() + i * ONE_DAY),
-      bookedMorning: false,
-      bookedEvening: false
-    }
-  }
-
-  spanMonth.innerText = selectedMonth.getFullYear() + ' ' + months[selectedMonth.getMonth()]
-
-  fetchEvents()
-}
-
-function fetchEvents(): void {
-  eventsUrl.search = new URLSearchParams({
-    key: API_KEY,
-    timeMin: timeMin.toISOString(),
-    timeMax: timeMax.toISOString()
-  }).toString()
-
-  fetch(eventsUrl)
+  fetch(EVENTS_URL + '?' + new URLSearchParams({ key: API_KEY, timeMin, timeMax }).toString())
     .then((res): Promise<EventsResponse> => res.json())
-    .then((res) => res.items.forEach(setCalendarDays))
-    .then(buildCalendar)
+    .then(({ items }) => items.map(toEvent))
+    .then((events) => toCalendarDays(firstDay.getTime(), events))
+    .then((calendarDays) => calendarDays.map(toHTMLDivElement))
+    .then((divs) => div_calendarBody.replaceChildren(...divs))
 }
 
-function setCalendarDays(item: Item) {
-  if (item.start.date === undefined || item.end.date === undefined) return
+function getLatestMonday(date: Date): Date {
+  var latestMonday = new Date(date.getTime())
+  latestMonday.setDate(latestMonday.getDate() - ((latestMonday.getDay() + 6) % 7))
+  return latestMonday
+}
 
-  const endDate = new Date(item.end.date)
-  endDate.setHours(0)
-  const startDate = new Date(item.start.date)
+function toEvent(item: Item): CalendarEvent {
+  const startDate = new Date(item.start.date ?? 0)
+  const endDate = new Date(item.end.date ?? 0)
   startDate.setHours(0)
-
-  for (
-    const indexDate = startDate;
-    indexDate.getTime() < endDate.getTime();
-    indexDate.setDate(indexDate.getDate() + 1)
-  ) {
-    const day = calendarDays.find((d) => d.date.getTime() === indexDate.getTime())
-    if (day != undefined) {
-      day.bookedMorning = true
-      day.bookedEvening = true
-    }
+  endDate.setHours(0)
+  return {
+    startTime: startDate.getTime(),
+    endTime: endDate.getTime()
   }
 }
 
-function buildCalendar() {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+function toCalendarDays(firstDayTime: number, events: Array<CalendarEvent>): Array<CalendarDay> {
+  const calendarDays: Array<CalendarDay> = []
+  for (let i = 0; i < 35; i++) {
+    const dayTime = firstDayTime + i * ONE_DAY_MS
+    const booked = events.find(({ startTime, endTime }) => dayTime >= startTime && dayTime < endTime) != undefined
+    calendarDays[i] = {
+      date: new Date(dayTime),
+      bookedMorning: booked,
+      bookedEvening: booked
+    }
+  }
+  return calendarDays
+}
 
-  const divs = calendarDays.map(({ date, bookedMorning, bookedEvening }) => {
-    const div = document.createElement('div')
-    bookedMorning && div.classList.add('booked-morning')
-    bookedEvening && div.classList.add('booked-evening')
-    date.getMonth() != selectedMonth.getMonth() && div.classList.add('faded')
-    date.getTime() === today.getTime() && div.classList.add('today')
-    div.innerText = date.getDate().toString()
-    return div
-  })
-  divCalendarBody.replaceChildren(...divs)
+function toHTMLDivElement({ date, bookedMorning, bookedEvening }: CalendarDay): HTMLDivElement {
+  const div = document.createElement('div')
+  bookedMorning && div.classList.add('booked-morning')
+  bookedEvening && div.classList.add('booked-evening')
+  date.getMonth() != firstDayOfSelectedMonth.getMonth() && div.classList.add('faded')
+  date.getTime() === today.getTime() && div.classList.add('today')
+  div.innerText = date.getDate().toString()
+  return div
 }
